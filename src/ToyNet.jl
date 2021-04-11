@@ -1,9 +1,7 @@
-export ToyNet
-
 module ToyNet
 
 using LinearAlgebra
-export NN, NN3, predict, loss, accuracy, numerical_gradient
+export NN, NN2, predict, loss, accuracy, numerical_gradient
 export onehot
 
 # neural network structure
@@ -16,16 +14,17 @@ end
 
 # init neural network
 # num of input, num of hidden nodes, num of output
-function NN3(i::Int, h::Int, o::Int)
+function NN2(i::Int, h::Int, o::Int)
     w = [rand(h, i), rand(o, h)]
     b = [rand(h), rand(o)]
-    return NN(3, w, b)
+    return NN(2, w, b)
 end
 
 
 # feed forward
 # network, layer num, activation function, input
-function forward(net::NN, i::Int, h, x)
+function forward(net::NN, i::Int, h::Function, x)
+    @show size(x)
     return h(net.w[i] * x .+ net.b[i])
 end
 

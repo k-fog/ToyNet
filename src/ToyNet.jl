@@ -14,7 +14,7 @@ end
 # init neural network
 # num of input, num of hidden nodes, num of output
 function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
-    w = [rand(h, i), rand(o, h)] .* weight_init_std
+    w = [randn(h, i), randn(o, h)] .* weight_init_std
     b = [zeros(h), zeros(o)] .* weight_init_std
     return NN(2, w, b)
 end

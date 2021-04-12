@@ -1,22 +1,26 @@
 module ToyNet
 
+include("layer.jl")
+
 using LinearAlgebra
 export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot
 
 # neural network structure
 mutable struct NN
-    size::Int         # size of this network
-    w::Vector{Matrix} # weights
-    b::Vector{Vector} # biases
+    size::Tuple       # size of this network
+    w::AbstractArray
+    b::AbstractArray
+    layer::Vector{AbstractLayer}
 end
 
 
 # init neural network
 # num of input, num of hidden nodes, num of output
 function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
+    s = (i, h ,o)
     w = [randn(h, i), randn(o, h)] .* weight_init_std
     b = [zeros(h), zeros(o)] .* weight_init_std
-    return NN(2, w, b)
+    return NN(s, w, b)
 end
 
 
@@ -30,7 +34,7 @@ end
 # execute network
 # network, af of hidden layer, af of output layer, input, layer num
 function predict(net::NN, h::Function, σ::Function, x, i::Int=1)
-    if i == net.size
+    if i == length(net.size) - 1
         return forward(net, i, σ, x)
     else
         return predict(net, h, σ, forward(net, i, h, x), i + 1)

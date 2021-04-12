@@ -6,7 +6,7 @@ mutable struct SigmoidLyr <: AbstractLayer
 end
 
 function forward!(lyr::SigmoidLyr, x)
-    out = 1 ./ (1 . exp(-x))
+    out = 1 ./ (1 .+ exp.(-x))
     lyr.out = out
     return out
 end

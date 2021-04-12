@@ -1,8 +1,7 @@
 module ToyNet
 
 using LinearAlgebra
-export NN, NN2, predict, loss, accuracy, numerical_gradient
-export onehot
+export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot
 
 # neural network structure
 mutable struct NN
@@ -14,9 +13,9 @@ end
 
 # init neural network
 # num of input, num of hidden nodes, num of output
-function NN2(i::Int, h::Int, o::Int)
-    w = [rand(h, i), rand(o, h)]
-    b = [zeros(h), zeros(o)]
+function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
+    w = [rand(h, i), rand(o, h)] .* weight_init_std
+    b = [zeros(h), zeros(o)] .* weight_init_std
     return NN(2, w, b)
 end
 
@@ -92,8 +91,6 @@ end
 function cross_entropy_error(y, t)
     batch_size = size(y, 2)
     δ = 1e-7
-    @show size(y)
-    @show size(t)
     return -sum(t .* log.(y .+ δ)) / batch_size
 end
 

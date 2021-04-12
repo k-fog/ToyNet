@@ -33,7 +33,7 @@ function predict(net::NN, h::Function, σ::Function, x, i::Int=1)
     if i == net.size
         return forward(net, i, σ, x)
     else
-        return predict(net, h, σ, forward(net, i, h, x), i + 1)
+        predict(net, h, σ, forward(net, i, h, x), i + 1)
     end
 end
 

@@ -3,9 +3,10 @@ export SigmoidLayer, AffineLayer, SoftmaxWithLossLayer, forward!, backward!
 # sigmoid layer
 mutable struct SigmoidLayer <: AbstractLayer
     out::AbstractArray
-    SigmoidLayer() = new()
-    SigmoidLayer(net::NN, n::Int) = new()
 end
+
+SigmoidLayer() = SigmoidLayer(undef)
+SigmoidLayer(net::NN, n::Int) = SigmoidLayer(undef)
 
 function forward!(layer::SigmoidLayer, x)
     out = 1 ./ (1 .+ exp.(-x))
@@ -25,10 +26,11 @@ mutable struct AffineLayer <: AbstractLayer
     x::AbstractArray
     dw::AbstractArray
     db::AbstractArray
-    AffineLayer() = new()
-    AffineLayer(net::NN, n::Int) = new(net.w[n], net.b[n], undef, undef, undef)
-    AffineLayer(w, b) = new(w, b, undef, undef, undef)
 end
+
+AffineLayer() = AffineLayer(undef, undef, undef, undef, undef)
+AffineLayer(net::NN, n::Int) = AffineLayer(net.w[n], net.b[n], undef, undef, undef)
+AffineLayer(w, b) = AffineLayer(w, b, undef, undef, undef)
 
 function forward!(layer::AffineLayer, x)
     layer.x = x
@@ -49,9 +51,10 @@ mutable struct SoftmaxWithLossLayer <: AbstractLayer
     loss::AbstractArray
     y::AbstractArray
     t::AbstractArray
-    SoftmaxWithLossLayer() = new()
-    SoftmaxWithLossLayer(net::NN, n::Int) = new()
 end
+
+SoftmaxWithLossLayer() = SoftmaxWithLossLayer(undef, undef, undef)
+SoftmaxWithLossLayer(net::NN, n::Int) = SoftmaxWithLossLayer()
 
 function forward!(layer::SoftmaxWithLossLayer, x, t)
     layer.t = t

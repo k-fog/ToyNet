@@ -1,9 +1,9 @@
 module ToyNet
 
-include("layer.jl")
-
 using LinearAlgebra
-export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot
+export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot, sequential!
+
+abstract type AbstractLayer end
 
 # neural network structure
 mutable struct NN
@@ -13,6 +13,7 @@ mutable struct NN
     layer::Vector{AbstractLayer}
 end
 
+include("layer.jl")
 
 # init neural network
 # num of input, num of hidden nodes, num of output
@@ -20,7 +21,19 @@ function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
     s = (i, h ,o)
     w = [randn(h, i), randn(o, h)] .* weight_init_std
     b = [zeros(h), zeros(o)] .* weight_init_std
-    return NN(s, w, b)
+    return NN(s, w, b, [])
+end
+
+
+# add layer to network
+function sequential!(net::NN, layer...)
+    net.layer = [layer[i](net, i) for i in 1:length(layer)]
+end
+
+
+# add layer to network
+function addlayer(net::NN, layer::T) where T <: AbstractLayer
+    push!(net.layer, layer)
 end
 
 
@@ -93,7 +106,7 @@ end
 
 
 function cross_entropy_error(y, t)
-    batch_size = size(y, 2)
+    batch_size = size(y, 3)
     δ = 1e-7
     return -sum(t .* log.(y .+ δ)) / batch_size
 end

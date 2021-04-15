@@ -1,7 +1,7 @@
 module ToyNet
 
 using LinearAlgebra
-export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot, sequential!
+export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot, addlayer!, addlastlayer!, gradient
 
 abstract type AbstractLayer end
 
@@ -11,6 +11,8 @@ mutable struct NN
     w::AbstractArray
     b::AbstractArray
     layer::Vector{AbstractLayer}
+    lastlayer::AbstractLayer
+    NN(s, w, b) = new(s, w, b, [])
 end
 
 include("layer.jl")
@@ -21,47 +23,41 @@ function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
     s = (i, h ,o)
     w = [randn(h, i), randn(o, h)] .* weight_init_std
     b = [zeros(h), zeros(o)] .* weight_init_std
-    return NN(s, w, b, [])
+    return NN(s, w, b)
 end
 
 
-# add layer to network
-function sequential!(net::NN, layer...)
+#= add layer to network
+function sequential!(net::NN, layer::Function...)
     net.layer = [layer[i](net, i) for i in 1:length(layer)]
 end
+=#
 
 
 # add layer to network
-function addlayer(net::NN, layer::T) where T <: AbstractLayer
+function addlayer!(net::NN, layer::T) where T <: AbstractLayer
     push!(net.layer, layer)
 end
 
 
-# feed forward
-# network, layer num, activation function, input
-function forward(net::NN, i::Int, h::Function, x)
-    return h(net.w[i] * x .+ net.b[i])
+function addlastlayer!(net::NN, layer::T) where T <: AbstractLayer
+    net.lastlayer = layer
 end
 
 
-# execute network
 # network, af of hidden layer, af of output layer, input, layer num
-function predict(net::NN, h::Function, σ::Function, x, i::Int=1)
-    if i == length(net.size) - 1
-        return forward(net, i, σ, x)
-    else
-        return predict(net, h, σ, forward(net, i, h, x), i + 1)
-    end
-end
-
 function predict(net::NN, x)
-    return predict(net, sigmoid, sigmoid, x)
+    for layer in net.layer
+        x = forward!(layer, x)
+    end
+    return x
 end
 
 
 # loss
 function loss(net::NN, x, t)
-    return cross_entropy_error(predict(net, x), t)
+    y = predict(net, x)
+    return forward!(net.lastlayer, y, t)
 end
 
 
@@ -90,6 +86,23 @@ function numerical_gradient(net::NN, x, t)
         "b2" => numerical_gradient(loss_w, net.b[2]),
     )
     return grads
+end
+
+
+function gradient(net::NN, x, t)
+    loss(net, x, t)
+    dout = 1
+    dout = backward!(net.lastlayer, dout)
+    layers = reverse(net.layers)
+    for layer in layers
+        dout = backward!(layer, dout)
+    end
+    return Dict(
+        "w1" => net.layer[1].w,
+        "b1" => net.layer[1].b,
+        "w2" => net.layer[2].w,
+        "b2" => net.layer[2].b,
+    )
 end
 
 

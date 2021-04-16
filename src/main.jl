@@ -24,8 +24,8 @@ function main()
         batch_mask = rand(1:train_size, batch_size)
         batch_x = reshape(train_x[:,:,batch_mask], (:, batch_size))
         batch_t = onehot(10, train_t[batch_mask])
-        predict(network, batch_x)
-        grad = gradient(network, batch_x, batch_t)
+        @show predict(network, batch_x)
+        # grad = gradient(network, batch_x, batch_t)
     end
 end
 

@@ -119,7 +119,7 @@ end
 
 
 function cross_entropy_error(y, t)
-    batch_size = size(y, 3)
+    batch_size = size(y, 2)
     δ = 1e-7
     return -sum(t .* log.(y .+ δ)) / batch_size
 end

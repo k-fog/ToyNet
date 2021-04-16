@@ -60,7 +60,7 @@ function forward!(layer::SoftmaxWithLossLayer, y, t)
 end
 
 function backward!(layer::SoftmaxWithLossLayer, dout=1)
-    batch_size = size(layer.t, 3)
+    batch_size = size(layer.t, 2)
     dx = (layer.y .- layer.t) ./ batch_size
     return dx
 end

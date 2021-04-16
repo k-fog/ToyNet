@@ -1,4 +1,24 @@
-export SigmoidLayer, AffineLayer, SoftmaxWithLossLayer, forward!, backward!
+export ReluLayer, SigmoidLayer, AffineLayer, SoftmaxWithLossLayer, forward!, backward!
+
+#relu layer
+mutable struct ReluLayer <: AbstractLayer
+    mask::AbstractArray
+    ReluLayer(x...) = new()
+end
+
+function forward!(layer::ReluLayer, x)
+    layer.mask = (x .<= 0)
+    out = copy(x)
+    out[layer.mask] .= 0
+    return out
+end
+
+function backward!(layer::ReluLayer, dout)
+    dout[layer.mask] .= 0
+    dx = dout
+    return dx
+end
+
 
 # sigmoid layer
 mutable struct SigmoidLayer <: AbstractLayer
@@ -39,14 +59,14 @@ end
 function backward!(layer::AffineLayer, dout)
     dx = layer.w' * dout
     layer.dw = dout * layer.x'
-    layer.db = sum(dout)
+    layer.db = sum.(dout)
     return dx
 end
 
 
 #softmax with loss layer
 mutable struct SoftmaxWithLossLayer <: AbstractLayer
-    loss::AbstractArray
+    loss::Float64
     y::AbstractArray
     t::AbstractArray
     SoftmaxWithLossLayer() = new()

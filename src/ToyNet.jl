@@ -21,7 +21,7 @@ include("layer.jl")
 # num of input, num of hidden nodes, num of output
 function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
     s = (i, h ,o)
-    w = [randn(h, i), randn(o, h)] .* weight_init_std
+    w = [rand(h, i), rand(o, h)] .* weight_init_std
     b = [zeros(h), zeros(o)] .* weight_init_std
     return NN(s, w, b)
 end
@@ -93,15 +93,15 @@ function gradient(net::NN, x, t)
     loss(net, x, t)
     dout = 1
     dout = backward!(net.lastlayer, dout)
-    layers = reverse(net.layers)
+    layers = reverse(net.layer)
     for layer in layers
         dout = backward!(layer, dout)
     end
     return Dict(
-        "w1" => net.layer[1].w,
-        "b1" => net.layer[1].b,
-        "w2" => net.layer[2].w,
-        "b2" => net.layer[2].b,
+        "w1" => net.w[1],
+        "b1" => net.b[1],
+        "w2" => net.w[2],
+        "b2" => net.b[2],
     )
 end
 

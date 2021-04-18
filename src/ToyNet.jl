@@ -8,11 +8,10 @@ abstract type AbstractLayer end
 # neural network structure
 mutable struct NN
     size::Tuple       # size of this network
-    w::AbstractArray
-    b::AbstractArray
-    layer::Vector{AbstractLayer}
+    params::Dict{String, AbstractArray}
+    layers::Vector{AbstractLayer}
     lastlayer::AbstractLayer
-    NN(s, w, b) = new(s, w, b, [])
+    NN(s, w1, b1, w2, b2) = new(s, Dict("w1"=>w1,"b1"=>b1,"w2"=>w2,"b2"=>b2), [])
 end
 
 include("layer.jl")
@@ -21,33 +20,35 @@ include("layer.jl")
 # num of input, num of hidden nodes, num of output
 function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
     s = (i, h ,o)
-    w = [rand(h, i), rand(o, h)] .* weight_init_std
-    b = [zeros(h), zeros(o)] .* weight_init_std
-    return NN(s, w, b)
+    w1 = randn(h, i) * weight_init_std
+    b1 = zeros(h)
+    w2 = randn(o, h) * weight_init_std
+    b2 = zeros(o)
+    return NN(s, w1, b1, w2, b2)
 end
 
 
 #= add layer to network
 function sequential!(net::NN, layer::Function...)
-    net.layer = [layer[i](net, i) for i in 1:length(layer)]
+net.layer = [layer[i](net, i) for i in 1:length(layer)]
 end
 =#
 
 
 # add layer to network
-function addlayer!(net::NN, layer::T) where T <: AbstractLayer
-    push!(net.layer, layer)
+function addlayer!(net::NN, layer::AbstractLayer)
+    push!(net.layers, layer)
 end
 
 
-function addlastlayer!(net::NN, layer::T) where T <: AbstractLayer
+function addlastlayer!(net::NN, layer::AbstractLayer)
     net.lastlayer = layer
 end
 
 
 # network, af of hidden layer, af of output layer, input, layer num
 function predict(net::NN, x)
-    for layer in net.layer
+    for layer in net.layers
         x = forward!(layer, x)
     end
     return x
@@ -55,6 +56,7 @@ end
 
 
 # loss
+# input data, teaching data
 function loss(net::NN, x, t)
     y = predict(net, x)
     return forward!(net.lastlayer, y, t)
@@ -77,31 +79,31 @@ function numerical_gradient(f::Function, x)
 end
 
 
-function numerical_gradient(net::NN, x, t)
-    loss_w = w -> loss(net, x, t)
-    grads = Dict(
-        "w1" => numerical_gradient(loss_w, net.w[1]),
-        "b1" => numerical_gradient(loss_w, net.b[1]),
-        "w2" => numerical_gradient(loss_w, net.w[2]),
-        "b2" => numerical_gradient(loss_w, net.b[2]),
-    )
-    return grads
+function accuracy(net::NN, x, t)
+    y = predict(net, x)
+    y = mapslices(argmax, y, dims=1)
+    if ndims(t) != 1
+        t = mapslices(argmax, t, dims=1)
+    end
+    accuracy = sum(y .== t) / float(size(x, 2))
+    return accuracy
 end
 
-
 function gradient(net::NN, x, t)
+    # forward
     loss(net, x, t)
+    # backbard
     dout = 1
     dout = backward!(net.lastlayer, dout)
-    layers = reverse(net.layer)
+    layers = reverse(net.layers)
     for layer in layers
         dout = backward!(layer, dout)
     end
     return Dict(
-        "w1" => net.w[1],
-        "b1" => net.b[1],
-        "w2" => net.w[2],
-        "b2" => net.b[2],
+        "w1" => net.layers[1].dw,
+        "b1" => net.layers[1].db,
+        "w2" => net.layers[3].dw,
+        "b2" => net.layers[3].db,
     )
 end
 

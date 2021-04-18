@@ -3,7 +3,7 @@ export ReluLayer, SigmoidLayer, AffineLayer, SoftmaxWithLossLayer, forward!, bac
 #relu layer
 mutable struct ReluLayer <: AbstractLayer
     mask::AbstractArray
-    ReluLayer(x...) = new()
+    ReluLayer() = new()
 end
 
 function forward!(layer::ReluLayer, x)
@@ -24,7 +24,6 @@ end
 mutable struct SigmoidLayer <: AbstractLayer
     out::AbstractArray
     SigmoidLayer() = new()
-    SigmoidLayer(net::NN, n::Int) = new()
 end
 
 function forward!(layer::SigmoidLayer, x)
@@ -35,6 +34,7 @@ end
 
 function backward!(layer::SigmoidLayer, dout)
     dx = dout .* (1.0 .- layer.out) .* layer.out
+    return dx
 end
 
 
@@ -45,8 +45,6 @@ mutable struct AffineLayer <: AbstractLayer
     x::AbstractArray
     dw::AbstractArray
     db::AbstractArray
-    AffineLayer() = new()
-    AffineLayer(net::NN, n::Int) = new(net.w[n], net.b[n])
     AffineLayer(w, b) = new(w, b)
 end
 
@@ -59,7 +57,7 @@ end
 function backward!(layer::AffineLayer, dout)
     dx = layer.w' * dout
     layer.dw = dout * layer.x'
-    layer.db = sum.(dout)
+    layer.db = vec(sum(dout, dims=2))
     return dx
 end
 
@@ -81,6 +79,6 @@ end
 
 function backward!(layer::SoftmaxWithLossLayer, dout=1)
     batch_size = size(layer.t, 2)
-    dx = (layer.y .- layer.t) ./ batch_size
+    dx = (layer.y .- layer.t) / batch_size
     return dx
 end

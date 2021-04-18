@@ -1,44 +1,54 @@
 include("./ToyNet.jl")
 
 using MLDatasets
+using Plots
 using .ToyNet
 
 function main()
     train_x, train_t = MNIST.traindata()
-    # test_x,  test_y  = MNIST.testdata()
+    test_x,  test_t  = MNIST.testdata()
     losslist = []
+    accuracylist = []
 
-    iters_num = 10
+    iters_num = 10000
     train_size = size(train_x)[3]
     batch_size = 100
     learning_rate = 0.1
 
     network = NN2(784, 100, 10)
-    addlayer!(network, ReluLayer(network, 1))
-    addlayer!(network, AffineLayer(network, 1))
-    addlayer!(network, ReluLayer(network, 2))
-    addlayer!(network, AffineLayer(network, 2))
+    addlayer!(network, AffineLayer(network.params["w1"], network.params["b1"]))
+    addlayer!(network, ReluLayer())
+    addlayer!(network, AffineLayer(network.params["w2"], network.params["b2"]))
+    addlayer!(network, ReluLayer())
     addlastlayer!(network, SoftmaxWithLossLayer())
 
-    for _ in 1:iters_num
+    for i in 0:iters_num
         batch_mask = rand(1:train_size, batch_size)
         batch_x = reshape(train_x[:,:,batch_mask], (:, batch_size))
         batch_t = onehot(10, train_t[batch_mask])
-        # @show predict(network, batch_x)
         grad = gradient(network, batch_x, batch_t)
 
-        for (key, value) in grad
-            if key[1] == 'w'
-                network.w[parse(Int, key[2])] -= learning_rate * value
-            else
-                network.b[parse(Int, key[2])] -= learning_rate * value
-            end
+        for key in ["w1", "b1", "w2", "b2"]
+            network.params[key] .-= learning_rate * grad[key]
         end
 
         l = loss(network, batch_x, batch_t)
-        println(l)
+
+        i % 1000 == 0 && println("loss: $l($i)")
+        i % 100 == 0 && begin
+            a1 = accuracy(network, batch_x, batch_t);
+            println("train-accuracy: $a1($i)")
+            a2 = accuracy(network, reshape(test_x, (28 ^ 2, :)), onehot(10, test_t))
+            println("test-accuracy: $a2($i)")
+            push!(accuracylist, a2)
+        end
+
         push!(losslist, l)
     end
+    f1 = plot(losslist, label="loss")
+    savefig(f1, "fig-loss")
+    f2 = plot(accuracylist, label="accuracy")
+    savefig(f2, "fig-accuracy")
 end
 
 @time main()

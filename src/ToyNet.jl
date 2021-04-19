@@ -4,27 +4,30 @@ using LinearAlgebra
 export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot, addlayer!, addlastlayer!, gradient
 
 abstract type AbstractLayer end
+abstract type AbstractOptimizer end
 
 # neural network structure
 mutable struct NN
     size::Tuple       # size of this network
     params::Dict{String, AbstractArray}
+    optimizer::AbstractOptimizer
     layers::Vector{AbstractLayer}
     lastlayer::AbstractLayer
-    NN(s, w1, b1, w2, b2) = new(s, Dict("w1"=>w1,"b1"=>b1,"w2"=>w2,"b2"=>b2), [])
+    NN(s, w1, b1, w2, b2, opt) = new(s, Dict("w1"=>w1,"b1"=>b1,"w2"=>w2,"b2"=>b2), opt, [])
 end
 
 include("layer.jl")
+include("optimizer.jl")
 
 # init neural network
 # num of input, num of hidden nodes, num of output
-function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01)
+function NN2(i::Int, h::Int, o::Int, weight_init_std=0.01; optimizer=SGD())
     s = (i, h ,o)
     w1 = randn(h, i) * weight_init_std
     b1 = zeros(h)
     w2 = randn(o, h) * weight_init_std
     b2 = zeros(o)
-    return NN(s, w1, b1, w2, b2)
+    return NN(s, w1, b1, w2, b2, optimizer)
 end
 
 

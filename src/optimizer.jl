@@ -18,7 +18,7 @@ mutable struct Momentum <: AbstractOptimizer
 end
 
 function update!(opt::Momentum, params, grads)
-    if isdefined(opt, :v)
+    if !isdefined(opt, :v)
         opt.v = Dict()
         for (key, val) in params
             opt.v[key] = zero(val)

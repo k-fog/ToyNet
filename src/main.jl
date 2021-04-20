@@ -11,11 +11,11 @@ function main()
     accuracylist = []
 
     iters_num = 10000
-    train_size = size(train_x)[3]
+    train_size = size(train_x, 3)
     batch_size = 100
     learning_rate = 0.1
 
-    network = NN2(784, 100, 10)
+    network = NN2(784, 100, 10, optimizer=Momentum())
     addlayer!(network, AffineLayer(network.params["w1"], network.params["b1"]))
     addlayer!(network, ReluLayer())
     addlayer!(network, AffineLayer(network.params["w2"], network.params["b2"]))
@@ -28,10 +28,7 @@ function main()
         batch_t = onehot(10, train_t[batch_mask])
         grad = gradient(network, batch_x, batch_t)
 
-        for key in ["w1", "b1", "w2", "b2"]
-            network.params[key] .-= learning_rate * grad[key]
-        end
-
+        update!(network.optimizer, network.params, grad)
         l = loss(network, batch_x, batch_t)
 
         i % 1000 == 0 && println("loss: $l($i)")

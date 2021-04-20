@@ -1,7 +1,8 @@
 module ToyNet
 
 using LinearAlgebra
-export NN, NN2, predict, loss, accuracy, numerical_gradient, onehot, addlayer!, addlastlayer!, gradient
+export NN, NN2, predict, loss, accuracy, numerical_gradient,
+       onehot, addlayer!, addlastlayer!, gradient, SGD, Momentum, update!
 
 abstract type AbstractLayer end
 abstract type AbstractOptimizer end
@@ -13,7 +14,7 @@ mutable struct NN
     optimizer::AbstractOptimizer
     layers::Vector{AbstractLayer}
     lastlayer::AbstractLayer
-    NN(s, w1, b1, w2, b2, opt) = new(s, Dict("w1"=>w1,"b1"=>b1,"w2"=>w2,"b2"=>b2), opt, [])
+    NN(s, w1, b1, w2, b2, opt::AbstractOptimizer) = new(s, Dict("w1"=>w1,"b1"=>b1,"w2"=>w2,"b2"=>b2), opt, [])
 end
 
 include("layer.jl")
